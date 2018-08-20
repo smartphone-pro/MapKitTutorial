@@ -10,7 +10,7 @@ import UIKit
 import MapKit
 
 protocol HandleMapSearch: class {
-    func dropPinZoomIn(placemark:MKPlacemark)
+    func dropPinZoomIn(_ placemark:MKPlacemark)
 }
 
 class ViewController: UIViewController {
@@ -30,7 +30,7 @@ class ViewController: UIViewController {
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestWhenInUseAuthorization()
         locationManager.requestLocation()
-        let locationSearchTable = storyboard!.instantiateViewControllerWithIdentifier("LocationSearchTable") as! LocationSearchTable
+        let locationSearchTable = storyboard!.instantiateViewController(withIdentifier: "LocationSearchTable") as! LocationSearchTable
         resultSearchController = UISearchController(searchResultsController: locationSearchTable)
         resultSearchController.searchResultsUpdater = locationSearchTable
         let searchBar = resultSearchController!.searchBar
@@ -45,30 +45,30 @@ class ViewController: UIViewController {
         
     }
     
-    func getDirections(){
+    @objc func getDirections(){
         guard let selectedPin = selectedPin else { return }
         let mapItem = MKMapItem(placemark: selectedPin)
         let launchOptions = [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]
-        mapItem.openInMapsWithLaunchOptions(launchOptions)
+        mapItem.openInMaps(launchOptions: launchOptions)
     }
 }
 
 extension ViewController : CLLocationManagerDelegate {
     
-    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-        if status == .AuthorizedWhenInUse {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .authorizedWhenInUse {
             locationManager.requestLocation()
         }
     }
     
-    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.first else { return }
         let span = MKCoordinateSpanMake(0.05, 0.05)
         let region = MKCoordinateRegion(center: location.coordinate, span: span)
         mapView.setRegion(region, animated: true)
     }
     
-    func locationManager(manager: CLLocationManager, didFailWithError error: NSError) {
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("error:: \(error)")
     }
 
@@ -76,7 +76,7 @@ extension ViewController : CLLocationManagerDelegate {
 
 extension ViewController: HandleMapSearch {
     
-    func dropPinZoomIn(placemark: MKPlacemark){
+    func dropPinZoomIn(_ placemark: MKPlacemark){
         // cache the pin
         selectedPin = placemark
         // clear existing pins
@@ -100,20 +100,20 @@ extension ViewController: HandleMapSearch {
 
 extension ViewController : MKMapViewDelegate {
     
-    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView?{
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView?{
         
         guard !(annotation is MKUserLocation) else { return nil }
         let reuseId = "pin"
-        var pinView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseId) as? MKPinAnnotationView
+        var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
         if pinView == nil {
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
         }
-        pinView?.pinTintColor = UIColor.orangeColor()
+        pinView?.pinTintColor = UIColor.orange
         pinView?.canShowCallout = true
         let smallSquare = CGSize(width: 30, height: 30)
-        let button = UIButton(frame: CGRect(origin: CGPointZero, size: smallSquare))
-        button.setBackgroundImage(UIImage(named: "car"), forState: .Normal)
-        button.addTarget(self, action: #selector(ViewController.getDirections), forControlEvents: .TouchUpInside)
+        let button = UIButton(frame: CGRect(origin: CGPoint.zero, size: smallSquare))
+        button.setBackgroundImage(UIImage(named: "car"), for: UIControlState())
+        button.addTarget(self, action: #selector(ViewController.getDirections), for: .touchUpInside)
         pinView?.leftCalloutAccessoryView = button
         
         return pinView
